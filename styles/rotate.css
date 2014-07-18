@@ -1,0 +1,52 @@
+@charset "UTF-8";
+
+
+
+#rotate-banner{
+    /*position:relative;*/
+    background-color: #fdff21;
+    width:60%;
+    /*height: auto;*/
+    /*padding-top: 23%;*/
+    /*padding-bottom:20px;*/
+    /*padding-top:10px;*/
+    margin:0 auto;
+    /*border:1px solid black;*/
+    display:block;
+    overflow:auto;
+}
+
+dl{
+    display: block;
+    position:relative;
+    width:100%;
+    height:100%;
+}
+
+dd {
+    /*display: none;*/
+
+}
+
+dd#js_hack{
+    display: block;
+    height:auto;
+    width: 60%;
+    margin:0 auto;
+}
+
+a, img{
+    display: block;
+    width:100%;
+    height:auto;
+}
+#rotate-banner>img{
+    display:block;
+    position:absolute;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    overflow: hidden;
+    z-index: -1000;
+}
