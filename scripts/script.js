@@ -19,7 +19,7 @@ $(window).load(function () {  // $(document).ready(... - w Chrome odpalana przed
             },
             duration: 1000
         };
-        var animation_is_going = false;
+        var animation_ongoing = false;
         var banner = document.getElementById(param.bannerid);
         var max_height = {};
         this.init = function () {
@@ -42,10 +42,12 @@ $(window).load(function () {  // $(document).ready(... - w Chrome odpalana przed
                     that.initBanner(banner, that.maxHeight(dd));
                 });//todo IE
             }
-            document.getElementById('move').addEventListener('click', function () {
+            document.getElementById('move_left').addEventListener('click', function () {
                 that.moveLeft();
             });
-
+            document.getElementById('move_right').addEventListener('click', function () {
+                that.moveRight();
+            });
         };
 
 
@@ -82,17 +84,25 @@ $(window).load(function () {  // $(document).ready(... - w Chrome odpalana przed
         };
 
 
-        this.animate = function (dd) {
-            var before_center = true;
+        /**
+         *
+         * @param dd
+         * @param direction
+         */
+        this.animate = function (dd, direction) {
             var banner = document.getElementById(param.bannerid),
                 banner_width = banner.offsetWidth,
                 position;
-            var animation_count = 0;
+            var animation_counter = 0;
+
+            direction = (direction == 'right') ? 1 : -1;
 
             for (var i = 0; i < dd.length; i++) {
                 var position = $(dd[i]).data("position");
                 var center = Math.floor(param.slides / 2);
-                if (position == -1) {
+
+
+                if (direction < 0 && position == -1) {
                     var j = i;
                     $(dd[i]).animate({
                             width: 0
@@ -101,23 +111,42 @@ $(window).load(function () {  // $(document).ready(... - w Chrome odpalana przed
                             duration: param.duration,
                             start: function () {
                                 this.current = i;
-                                animation_count = animation_count + this.current;
+                                animation_counter = animation_counter + this.current;
                             },
                             complete: function () {
                                 dd[j].style.zIndex = dd[j].style.zIndex - 1;
-                                animation_count = animation_count - this.current;
-                                if (animation_count <= 0) {
-                                    animation_is_going = false;
+                                animation_counter = animation_counter - this.current;
+                                if (animation_counter <= 0) {
+                                    animation_ongoing = false;
                                 }
                             }
                         });
-                }
-                else if ((position >= 0) && (position < param.slides )) {
+
+                } else if (direction > 0 && position == param.slides) {
+                    var j = i;
+                    $(dd[i]).animate({
+                            width: 0
+                        },
+                        {
+                            duration: param.duration,
+                            start: function () {
+                                this.current = i;
+                                dd[j].style.zIndex = -1;
+                                animation_counter = animation_counter + this.current;
+                            },
+                            complete: function () {
+                                dd[j].style.zIndex = dd[j].style.zIndex - direction;
+                                animation_counter = animation_counter - this.current;
+                                if (animation_counter <= 0) {
+                                    animation_ongoing = false;
+                                }
+                            }
+                        });
+
+                } else if ((position >= 0) && (position < param.slides )) {
                     dd[i].style.display = 'block';
                     dd[i].style.position = 'absolute';
-                    before_center = false;
-
-                    dd[i].style.zIndex = dd[i].style.zIndex = (position <= center) ? position : parseInt(dd[i - 1].style.zIndex) - 1;
+                    dd[i].style.zIndex = (position <= center) ? position : parseInt(dd[i - 1].style.zIndex) - 1;
 
                     $(dd[i]).animate({
                         width: param.slides_width[position] + '%',
@@ -127,41 +156,84 @@ $(window).load(function () {  // $(document).ready(... - w Chrome odpalana przed
                         duration: param.duration,
                         start: function () {
                             this.current = i;
-                            animation_count = animation_count + this.current;
+                            animation_counter = animation_counter + this.current;
                         },
                         complete: function () {
-                            animation_count = animation_count - this.current;
-                            if (animation_count <= 0) {
-                                console.log('Zmień flagę: '+animation_count);
-                                animation_is_going = false;
+                            animation_counter = animation_counter - this.current;
+                            if (animation_counter <= 0) {
+                                animation_ongoing = false;
                             }
                         }
                     });
+                } else {
+                    if (position < center) {
+                        dd[i].style.zIndex = position;
+                    } else {
+                        dd[i].style.zIndex = parseInt(dd[i].style.zIndex) - direction + 'alal';
+
+                    }
                 }
             }
         }
 
 
         this.moveLeft = function () {
-            if (!animation_is_going) {
-                animation_is_going = true;
+            if (!animation_ongoing) {
                 var dd = document.getElementById(param.bannerid).getElementsByTagName('dd');
-                for (var i = 0, size = dd.length; i < size; i++) {
-                    $(dd[i]).data({position: $(dd[i]).data('position') - 1});
+                if ($(dd[dd.length-1]).data('position') != Math.floor(param.slides / 2)) {
+                    animation_ongoing = true;
+                    for (var i = 0, size = dd.length; i < size; i++) {
+                        $(dd[i]).data({position: $(dd[i]).data('position') - 1});
+                    }
+                    this.animate(dd, 'left');
+                } else {
+                    this.goToBegin();
                 }
-                this.animate(dd);
             }
         }
 
         this.moveRight = function () {
-            if (!animation_is_going) {
-                animation_is_going = true;
+            if (!animation_ongoing) {
                 var dd = document.getElementById(param.bannerid).getElementsByTagName('dd');
-                for (var i = 0, size = dd.length; i < size; i++) {
-                    $(dd[i]).data({position: $(dd[i]).data('position') + 1});
+                if ($(dd[0]).data('position') != Math.floor(param.slides / 2)) {
+                    animation_ongoing = true;
+                    for (var i = 0, size = dd.length; i < size; i++) {
+                        $(dd[i]).data({position: $(dd[i]).data('position') + 1});
+                    }
+                    this.animate(dd, 'right');
+                }
+                else {
+                    this.goToEnd();
                 }
             }
         }
+
+
+
+
+
+        this.goToBegin = function(){
+            var dd = document.getElementById(param.bannerid).getElementsByTagName('dd');
+            var center = Math.floor(param.slides / 2);
+            $(dd[0]).data({position: center });
+            for (var i = 1, size = dd.length; i < size; i++) {
+                $(dd[i]).data({position: center + i});
+            }
+            this.initDDStyle(dd);
+        }
+
+
+
+        this.goToEnd = function(){
+            var dd = document.getElementById(param.bannerid).getElementsByTagName('dd');
+            var center = Math.floor(param.slides / 2);
+            $(dd[dd.length-1]).data({position: center });
+            for (var i = 0, size = dd.length; i < size-1; i++) {
+                $(dd[size- i -2]).data({position: center - i-1});
+            }
+            this.initDDStyle(dd);
+        }
+
 
         this.initParamArrays = function () {
             var half = Math.floor(param.slides / 2);
