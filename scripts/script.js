@@ -3,7 +3,7 @@
  */
 
 $(window).load(function () {  // $(document).ready(... - w Chrome odpalana przed załadowaniem wszystkich obrazków (stąd różne wymiary )
-    function Banner(parametrs) {
+    function Banner() {
         var param = {
             bannerid: "rotate-banner",
             slides: 5,
@@ -16,7 +16,8 @@ $(window).load(function () {  // $(document).ready(... - w Chrome odpalana przed
                 bottom: 0,
                 left: 10
             },
-            duration: 500
+            duration: 500,
+            quick_duration: 100
         };
         var animation_ongoing = false;
         var banner = document.getElementById(param.bannerid);
@@ -26,8 +27,8 @@ $(window).load(function () {  // $(document).ready(... - w Chrome odpalana przed
                 if (typeof user_parameters != 'undefined') {
 
                     for (var key in param) {
-                        if (typeof user_parameters[key] != 'undefined') {
-                            param[key] = user_parameters[key];
+                        if (Object.prototype.hasOwnProperty.call(param, key)) {
+                            param.key = user_parameters.key;
                         }
                     }
                 }
@@ -36,19 +37,15 @@ $(window).load(function () {  // $(document).ready(... - w Chrome odpalana przed
                 param.center = ((param.center < dd.length) && (param.center >= 0)) ? param.center - 1 : param._center_position;
                 initParamArrays();
 
-            }
+            };
             var maxHeight = function () {
-               // console.log('maxHeight->banner.offsetWidth: ' + banner.offsetWidth);
+                // console.log('maxHeight->banner.offsetWidth: ' + banner.offsetWidth);
                 return (max_height.height * Math.max.apply(null, param.slides_width) * 0.01 * banner.offsetWidth) / max_height.width;
             };
             var initBanner = function (banner, max_height) {
                 banner.style.position = 'relative';
-                console.log(max_height * 0.01 * param.padding.top);
-                console.log(max_height * 0.01 * param.padding.bottom);
                 param.bottom_px = max_height * 0.01 * param.padding.bottom;
-                banner.style.height = max_height * (1+ (0.01*(param.padding.top + param.padding.bottom))) + 'px';
-//                banner.style.paddingBottom = param.padding.bottom + 'px';
-//                banner.style.paddingTop = param.padding.top + 'px';
+                banner.style.height = max_height * (1 + (0.01 * (param.padding.top + param.padding.bottom))) + 'px';
             };
             var initParamArrays = function () {
                 if (param.slides_width.length != param.slides) {
@@ -97,34 +94,34 @@ $(window).load(function () {  // $(document).ready(... - w Chrome odpalana przed
 
             if (dd.length >= param.slides) {
                 initParameters(parameters);
-              //  console.log('Refresh -> initBanner_1:');
+                //  console.log('Refresh -> initBanner_1:');
                 initBanner(banner, maxHeight());
                 setPosition(dd);
-               // console.log('Refresh -> initBanner_2:');
+                // console.log('Refresh -> initBanner_2:');
                 initDDStyle(dd);
                 initBanner(banner, maxHeight()); // I know... uncomment console.log('Refresh...),console.log('Resize...)
-                                                // and console.log in maxHeight().
-                                                // Change width of browser window and use 'maximize' button  few times.
-                                                // Test different values width. Did you see differences?
+                // and console.log in maxHeight().
+                // Change browser window width and use 'maximize' button a few times.
+                // Test different width values. Do you see a difference?
 
                 $(window).resize(function () {
-                 //   console.log('Resize -> initBanner_1:');
+                    //   console.log('Resize -> initBanner_1:');
                     initBanner(banner, maxHeight());
                     initDDStyle(dd);
-                   // console.log('Resize -> initBanner_2:');
+                    // console.log('Resize -> initBanner_2:');
                     initBanner(banner, maxHeight());    //I know...
                 });
 
 
                 $('#move_left').bind('click', function (e) {
                     e.preventDefault();
-                    moveLeft();
+                    moveLeft(dd);
                 });
 
 
                 $('#move_right').bind('click', function (e) {
                     e.preventDefault();
-                    moveRight();
+                    moveRight(dd);
                 });
 
 
@@ -146,7 +143,7 @@ $(window).load(function () {  // $(document).ready(... - w Chrome odpalana przed
                     dd[i].style.position = 'absolute';
                     dd[i].style.width = param.slides_width[position] + '%';
                     dd[i].style.zIndex = (position <= param._center_position) ? position : parseInt(dd[i - 1].style.zIndex) - 1;
-                    dd[i].style.bottom = param.bottom_px  + 'px';
+                    dd[i].style.bottom = param.bottom_px + 'px';
                     dd[i].style.left = banner_width * param.slides_position[position]
                         - 0.5 * Math.round((banner_width * 0.01) * param.slides_width[position]) + 'px';
                 } else {
@@ -163,13 +160,13 @@ $(window).load(function () {  // $(document).ready(... - w Chrome odpalana przed
             }
         };
 
-        var animate = function (dd, direction) {
+        var animate = function (dd, direction, duration, callback) {
             var banner = document.getElementById(param.bannerid),
                 banner_width = banner.offsetWidth,
                 animation_counter = 0;
 
             direction = (direction == 'right') ? 1 : -1;
-
+            duration = (typeof duration == 'number')? duration:param.duration;
             for (var i = 0; i < dd.length; i++) {
                 var position = $(dd[i]).data("position");
                 if ((direction < 0 && position == -1) || (direction > 0 && position == param.slides)) {
@@ -179,7 +176,7 @@ $(window).load(function () {  // $(document).ready(... - w Chrome odpalana przed
                                 width: 0
                             },
                             {
-                                duration: param.duration,
+                                duration: duration,
                                 start: function () {
                                     this.current = j;
                                     dd[j].style.zIndex = -1;
@@ -189,6 +186,9 @@ $(window).load(function () {  // $(document).ready(... - w Chrome odpalana przed
                                     animation_counter = animation_counter - this.current;
                                     if (animation_counter <= 0) {
                                         animation_ongoing = false;
+                                        if (typeof callback != 'undefined') {
+                                            callback(dd);
+                                        }
                                     }
                                 }
                             })
@@ -196,15 +196,14 @@ $(window).load(function () {  // $(document).ready(... - w Chrome odpalana przed
                 } else if ((position >= 0) && (position < param.slides )) {
                     dd[i].style.display = 'block';
                     dd[i].style.position = 'absolute';
-                    dd[i].style.zIndex = (position <= param._center_position) ? position : parseInt(dd[i - 1].style.zIndex) - 1;
-
+                    dd[i].style.zIndex = (position <= param._center_position) ? position : parseInt(dd[i].style.zIndex)- direction;
                     (function (j) {
                         $(dd[j]).animate({
                             width: param.slides_width[position] + '%',
                             left: banner_width * param.slides_position[position]
                                 - 0.5 * Math.round((banner_width * 0.01) * param.slides_width[position]) + 'px'
                         }, {
-                            duration: param.duration,
+                            duration: duration,
                             start: function () {
                                 this.current = j;
                                 animation_counter = animation_counter + this.current;
@@ -213,6 +212,9 @@ $(window).load(function () {  // $(document).ready(... - w Chrome odpalana przed
                                 animation_counter = animation_counter - this.current;
                                 if (animation_counter <= 0) {
                                     animation_ongoing = false;
+                                    if (typeof callback != 'undefined') {
+                                        callback(dd);
+                                    }
                                 }
                             }
                         })
@@ -228,9 +230,8 @@ $(window).load(function () {  // $(document).ready(... - w Chrome odpalana przed
             }
         };
 
-        var moveLeft = function () {
+        var moveLeft = function (dd) {
             if (!animation_ongoing) {
-                var dd = document.getElementById(param.bannerid).getElementsByTagName('dd');
                 if ($(dd[dd.length - 1]).data('position') != param._center_position) {
                     animation_ongoing = true;
                     for (var i = 0, size = dd.length; i < size; i++) {
@@ -238,14 +239,13 @@ $(window).load(function () {  // $(document).ready(... - w Chrome odpalana przed
                     }
                     animate(dd, 'left');
                 } else {
-                    goToBegin();
+                    goToBegin(dd, 0);
                 }
             }
         };
 
-        var moveRight = function () {
+        var moveRight = function (dd) {
             if (!animation_ongoing) {
-                var dd = document.getElementById(param.bannerid).getElementsByTagName('dd');
                 if ($(dd[0]).data('position') != param._center_position) {
                     animation_ongoing = true;
                     for (var i = 0, size = dd.length; i < size; i++) {
@@ -254,32 +254,33 @@ $(window).load(function () {  // $(document).ready(... - w Chrome odpalana przed
                     animate(dd, 'right');
                 }
                 else {
-                    goToEnd();
+                    goToEnd(dd);
                 }
             }
         };
 
-        var goToBegin = function () {
-//
-            var dd = document.getElementById(param.bannerid).getElementsByTagName('dd');
-            $(dd[0]).data({position: param._center_position });
-            for (var i = 1, size = dd.length; i < size; i++) {
-                $(dd[i]).data({position: param._center_position + i});
-            }
 
-            initDDStyle(dd);
-        };
 
-        var goToEnd = function () {
-            var dd = document.getElementById(param.bannerid).getElementsByTagName('dd');
-            $(dd[dd.length - 1]).data({position: param._center_position });
-            for (var i = 0, size = dd.length; i < size - 1; i++) {
-                $(dd[size - i - 2]).data({position: param._center_position - i - 1});
+        var goToBegin = function (dd) {
+            if ($(dd[0]).data('position') != param._center_position) {
+                animation_ongoing = true;
+                for (var i = 0, size = dd.length; i < size; i++) {
+                    $(dd[i]).data({position: $(dd[i]).data('position') + 1});
+                }
+                animate(dd, 'right', param.quick_duration, goToBegin);
             }
-            initDDStyle(dd);
         };
 
 
+        var goToEnd = function (dd) {
+            if ($(dd[dd.length-1]).data('position') != param._center_position) {
+                animation_ongoing = true;
+                for (var i = 0, size = dd.length; i < size; i++) {
+                    $(dd[i]).data({position: $(dd[i]).data('position') - 1});
+                }
+                animate(dd, 'left',param.quick_duration, goToEnd);
+            }
+        };
 
 
     }
@@ -288,17 +289,18 @@ $(window).load(function () {  // $(document).ready(... - w Chrome odpalana przed
     var banner = new Banner();
     banner.init(
         {
-        duration: 500,
-        padding: {
-            top: 10,
-            bottom: 10,
-            left: 0,
-            right: 0
-        },
-        slides: 3,
-        center: 5,
-        slides_width: [30, 40, 30],
-        slides_position: [0.2, 0.5, 0.8]}
+            duration: 500,
+            quick_duration: 100,
+            padding: {
+                top: 10,
+                bottom: 10,
+                left: 0,
+                right: 0
+            },
+            slides: 3,
+            center: 5,
+            slides_width: [30, 40, 30],
+            slides_position: [0.2, 0.5, 0.8]}
     );
 })
 ;
