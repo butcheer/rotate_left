@@ -28,7 +28,7 @@ $(window).load(function () {  // $(document).ready(... - w Chrome odpalana przed
 
                     for (var key in param) {
                         if (Object.prototype.hasOwnProperty.call(param, key)) {
-                            param.key = user_parameters.key;
+                            param[key] = user_parameters[key];
                         }
                     }
                 }
