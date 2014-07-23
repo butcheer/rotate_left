@@ -1,19 +1,21 @@
 @charset "UTF-8";
+#container {
 
+    max-width: 780px;
+    width: auto;
+    margin:0 auto;
+    padding: 0;
+
+}
 
 
 #rotate-banner{
-    /*position:relative;*/
     background-color: #fdff21;
-    width:60%;
-    /*height: auto;*/
-    /*padding-top: 23%;*/
-    /*padding-bottom:20px;*/
-    /*padding-top:10px;*/
+    width:40%;
     margin:0 auto;
-    /*border:1px solid black;*/
     display:block;
-    overflow:auto;
+    overflow:hidden;
+    z-index : 0;
 }
 
 dl{
